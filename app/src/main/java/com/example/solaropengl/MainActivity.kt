@@ -11,9 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.solaropengl.info.InfoScreen
 import com.example.solaropengl.news.NewsScreen
 import com.example.solaropengl.scene.SceneScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.solaropengl.ui.theme.SolarOpenGLTheme
 
 private object Routes {
@@ -45,14 +46,23 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Routes.SCENE) {
                             SceneScreen(
-                                onInfoClick = { navController.navigate(Routes.INFO) }
+                                onInfoClick = { idx ->
+                                    navController.navigate("info/$idx")
+                                }
                             )
                         }
-                        composable(Routes.INFO) {
-                            InfoScreen(
+
+                        composable(
+                            route = "info/{bodyIndex}",
+                            arguments = listOf(navArgument("bodyIndex") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            val idx = backStackEntry.arguments?.getInt("bodyIndex") ?: 0
+                            com.example.solaropengl.info.InfoScreen(
+                                bodyIndex = idx,
                                 onBack = { navController.popBackStack() }
                             )
                         }
+
                     }
                 }
             }

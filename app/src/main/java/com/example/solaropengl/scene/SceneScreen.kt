@@ -11,18 +11,16 @@ import com.example.solaropengl.gl.SolarRenderer
 
 @Composable
 fun SceneScreen(
-    onInfoClick: () -> Unit
+    onInfoClick: (Int) -> Unit
 ) {
     val renderer = remember { SolarRenderer() }
-    var selected by remember { mutableIntStateOf(0) } // 0..8 (8 планет + Луна)
+    var selected by remember { mutableIntStateOf(0) } // 0..8
 
-    // синхронизируем выбранный объект с рендерером
     LaunchedEffect(selected) {
         renderer.setSelectedBodyIndex(selected)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-
         OpenGLScreen(renderer = renderer)
 
         Row(
@@ -40,7 +38,7 @@ fun SceneScreen(
                 selected = (selected + 1) % renderer.bodyCount
             }) { Text("Вправо") }
 
-            Button(onClick = onInfoClick) { Text("Информация") }
+            Button(onClick = { onInfoClick(selected) }) { Text("Информация") }
         }
     }
 }
