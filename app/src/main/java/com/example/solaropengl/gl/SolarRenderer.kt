@@ -13,8 +13,9 @@ import com.example.solaropengl.gl.shaders.TextureShaderProgram
 import com.example.solaropengl.gl.util.TextureHelper
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import kotlin.math.sin
 
-class SolarRenderer : GLSurfaceView.Renderer, ContextAwareRenderer  {
+class SolarRenderer : GLSurfaceView.Renderer, ContextAwareRenderer {
 
     // 8 планет + Луна
     val bodyCount: Int get() = 9
@@ -42,6 +43,18 @@ class SolarRenderer : GLSurfaceView.Renderer, ContextAwareRenderer  {
     private lateinit var colorProgram: ColorShaderProgram
 
     private var galaxyTextureId = 0
+
+    // ---------- BLACK HOLE (step 8) : ONLY LENS ----------
+    private var lensTextureId = 0
+
+    private var bhX = -1.25f            // NDC
+    private val bhBaseY = 0.25f         // базовая высота
+    private var bhSpeed = 0.32f         // NDC/сек
+    private val bhBaseScale = 0.30f     // размер линзы (чуть больше)
+
+    private var bhAngle = 0f            // вращение линзы
+    private var bhTime = 0f             // время для синусов
+    // -----------------------------------------------------
 
     private var lastTimeNs = 0L
 
@@ -78,7 +91,6 @@ class SolarRenderer : GLSurfaceView.Renderer, ContextAwareRenderer  {
         PlanetParams(0.17f, 5.7f, 10f,  85f, floatArrayOf(0.2f, 0.4f, 0.9f, 1f))  // Neptune
     )
 
-
     override fun setContext(context: Context) {
         appContext = context.applicationContext
     }
@@ -96,6 +108,9 @@ class SolarRenderer : GLSurfaceView.Renderer, ContextAwareRenderer  {
 
         val ctx = appContext ?: error("Context not set")
         galaxyTextureId = TextureHelper.loadTexture(ctx, R.drawable.galaxy)
+
+        // ONLY lens (фиолетовая линза)
+        lensTextureId = TextureHelper.loadTexture(ctx, R.drawable.lens)
 
         lastTimeNs = System.nanoTime()
     }
@@ -119,23 +134,39 @@ class SolarRenderer : GLSurfaceView.Renderer, ContextAwareRenderer  {
         val dt = (now - lastTimeNs).coerceAtLeast(0L) / 1_000_000_000f
         lastTimeNs = now
 
+        // анимация планет
         for (i in planets.indices) {
             planetOrbitAngles[i] = (planetOrbitAngles[i] + planets[i].orbitSpeed * dt) % 360f
             planetSpinAngles[i]  = (planetSpinAngles[i]  + planets[i].spinSpeed  * dt) % 360f
         }
 
+        // анимация луны
         moonOrbit = (moonOrbit + 180f * dt) % 360f
         moonSpin  = (moonSpin  + 300f * dt) % 360f
 
+        // -------- black hole lens motion --------
+        bhTime += dt
+        bhAngle = (bhAngle + 28f * dt) % 360f
+
+        val speedNow = bhSpeed * (0.9f + 0.1f * sin(bhTime * 0.8f))
+        bhX += speedNow * dt
+        if (bhX > 1.25f) bhX = -1.25f
+        // ---------------------------------------
+
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
 
-        // ---------- ФОН ----------
+        // ---------- 1) ФОН: ГАЛАКТИКА ----------
         GLES20.glDisable(GLES20.GL_DEPTH_TEST)
         Matrix.setIdentityM(mvpMatrix, 0)
         textureProgram.use()
         textureProgram.setUniforms(mvpMatrix, galaxyTextureId)
         quad.bindData(textureProgram)
         quad.draw()
+
+        // ---------- 2) LENS: поверх галактики, но под планетами ----------
+        drawLensOverlay()
+
+        // ---------- 3) 3D СЦЕНА ----------
         GLES20.glEnable(GLES20.GL_DEPTH_TEST)
 
         // ---------- СОЛНЦЕ ----------
@@ -150,7 +181,7 @@ class SolarRenderer : GLSurfaceView.Renderer, ContextAwareRenderer  {
             Matrix.translateM(modelMatrix, 0, p.distance, 0f, 0f)
             Matrix.rotateM(modelMatrix, 0, planetSpinAngles[i], 0f, 1f, 0f)
 
-            // позиция планеты через матрицу (НЕ через cos/sin)
+            // позиция планеты через матрицу
             val origin = floatArrayOf(0f, 0f, 0f, 1f)
             val out = FloatArray(4)
             Matrix.multiplyMV(out, 0, modelMatrix, 0, origin, 0)
@@ -171,7 +202,38 @@ class SolarRenderer : GLSurfaceView.Renderer, ContextAwareRenderer  {
             if (i == 2) drawMoonAroundEarth()
         }
 
+        // ---------- КУБ ВЫБОРА ----------
         drawSelectionCube()
+    }
+
+    /**
+     * Только линза: вращение + пульсация + "плавание" по Y.
+     * Рисуется в NDC поверх галактики (depth не используется).
+     */
+    private fun drawLensOverlay() {
+        GLES20.glEnable(GLES20.GL_BLEND)
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+
+        GLES20.glDepthMask(false)
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST)
+
+        val y = bhBaseY + 0.06f * sin(bhTime * 0.7f)
+        val pulse = 1f + 0.06f * sin(bhTime * 1.6f)
+
+        Matrix.setIdentityM(modelMatrix, 0)
+        Matrix.translateM(modelMatrix, 0, bhX, y, 0f)
+        Matrix.rotateM(modelMatrix, 0, bhAngle, 0f, 0f, 1f)
+        Matrix.scaleM(modelMatrix, 0, bhBaseScale * pulse, bhBaseScale * pulse, 1f)
+
+        System.arraycopy(modelMatrix, 0, mvpMatrix, 0, 16)
+
+        textureProgram.use()
+        textureProgram.setUniforms(mvpMatrix, lensTextureId)
+        quad.bindData(textureProgram)
+        quad.draw()
+
+        GLES20.glDepthMask(true)
+        GLES20.glDisable(GLES20.GL_BLEND)
     }
 
     private fun drawSphereAtCenter(scale: Float, r: Float, g: Float, b: Float, a: Float) {

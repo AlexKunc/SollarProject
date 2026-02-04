@@ -4,7 +4,7 @@ import androidx.annotation.DrawableRes
 import com.example.solaropengl.R
 
 data class PlanetInfo(
-    val id: Int,              // 0..7 как в рендерере
+    val id: Int,
     val name: String,
     val description: String,
     @DrawableRes val imageRes: Int
