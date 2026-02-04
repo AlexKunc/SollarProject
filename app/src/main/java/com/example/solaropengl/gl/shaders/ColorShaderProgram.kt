@@ -39,11 +39,11 @@ class ColorShaderProgram {
         GLES20.glUseProgram(programId)
     }
 
-    fun setUniforms(mvpMatrix: FloatArray) {
+    fun setUniforms(mvpMatrix: FloatArray, r: Float, g: Float, b: Float, a: Float) {
         GLES20.glUniformMatrix4fv(uMvpMatrixLocation, 1, false, mvpMatrix, 0)
-        // цвет куба
-        GLES20.glUniform4f(uColorLocation, 0.2f, 0.8f, 1.0f, 1.0f)
+        GLES20.glUniform4f(uColorLocation, r, g, b, a)
     }
+
 
     fun setVertexAttribPointer(
         buffer: java.nio.FloatBuffer,
