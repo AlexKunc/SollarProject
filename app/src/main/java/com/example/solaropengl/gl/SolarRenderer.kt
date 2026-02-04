@@ -14,7 +14,7 @@ import com.example.solaropengl.gl.util.TextureHelper
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class SolarRenderer : GLSurfaceView.Renderer {
+class SolarRenderer : GLSurfaceView.Renderer, ContextAwareRenderer  {
 
     // 8 планет + Луна
     val bodyCount: Int get() = 9
@@ -79,7 +79,7 @@ class SolarRenderer : GLSurfaceView.Renderer {
     )
 
 
-    fun setContext(context: Context) {
+    override fun setContext(context: Context) {
         appContext = context.applicationContext
     }
 
@@ -150,7 +150,7 @@ class SolarRenderer : GLSurfaceView.Renderer {
             Matrix.translateM(modelMatrix, 0, p.distance, 0f, 0f)
             Matrix.rotateM(modelMatrix, 0, planetSpinAngles[i], 0f, 1f, 0f)
 
-            // ✅ позиция планеты через матрицу (НЕ через cos/sin)
+            // позиция планеты через матрицу (НЕ через cos/sin)
             val origin = floatArrayOf(0f, 0f, 0f, 1f)
             val out = FloatArray(4)
             Matrix.multiplyMV(out, 0, modelMatrix, 0, origin, 0)

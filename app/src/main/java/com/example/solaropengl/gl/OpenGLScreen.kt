@@ -7,7 +7,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 @Composable
 fun OpenGLScreen(renderer: GLSurfaceView.Renderer) {
     AndroidView(factory = { context ->
-        if (renderer is SolarRenderer) renderer.setContext(context)
+        if (renderer is ContextAwareRenderer) renderer.setContext(context)
 
         GLSurfaceView(context).apply {
             setEGLContextClientVersion(2)
