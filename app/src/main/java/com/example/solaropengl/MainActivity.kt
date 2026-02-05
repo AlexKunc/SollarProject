@@ -20,7 +20,6 @@ import com.example.solaropengl.ui.theme.SolarOpenGLTheme
 private object Routes {
     const val NEWS = "news"
     const val SCENE = "scene"
-    const val INFO = "info"
 }
 
 class MainActivity : ComponentActivity() {

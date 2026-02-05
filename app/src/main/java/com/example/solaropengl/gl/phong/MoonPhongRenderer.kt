@@ -11,7 +11,7 @@ import javax.microedition.khronos.opengles.GL10
 class MoonPhongRenderer : GLSurfaceView.Renderer, ContextAwareRenderer {
 
     override fun setContext(context: Context) {
-        // Здесь пока не нужен, но оставляем на будущее (текстура Луны/карта нормалей)
+
     }
 
     private val projection = FloatArray(16)
