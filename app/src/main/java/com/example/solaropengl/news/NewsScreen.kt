@@ -93,7 +93,7 @@ private fun NewsTile(
                 Text(tile.news.body, style = MaterialTheme.typography.bodyMedium)
             }
 
-            // 10% - лайки (нажатие увеличивает)
+            // 10% - лайки
             Row(
                 modifier = Modifier
                     .weight(0.1f)

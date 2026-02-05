@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 class NewsViewModel : ViewModel() {
+
     private val allNews: List<NewsItem> = listOf(
         NewsItem(1, "Галактические вести", "Астрономы обнаружили новую яркую туманность недалеко от созвездия Лебедя."),
         NewsItem(2, "Космическая погода", "На Солнце зафиксирована вспышка класса M. Возможны полярные сияния."),
@@ -25,13 +26,12 @@ class NewsViewModel : ViewModel() {
         NewsItem(10, "Метеорный поток", "На выходных ожидается пик активности потока. Лучшее время — перед рассветом.")
     )
 
-    private val _uiState: MutableStateFlow<NewsUiState> =
-        MutableStateFlow(
-            NewsUiState(
-                tiles = initialTiles()
-            )
-        )
+    // лайки храним по id новости
+    private val likesById = mutableMapOf<Int, Int>()
 
+    private val _uiState = MutableStateFlow(
+        NewsUiState(tiles = initialTiles())
+    )
     val uiState: StateFlow<NewsUiState> = _uiState.asStateFlow()
 
     init {
@@ -40,10 +40,15 @@ class NewsViewModel : ViewModel() {
 
     fun like(tileIndex: Int) {
         _uiState.update { state ->
-            val newTiles = state.tiles.toMutableList()
-            val tile = newTiles[tileIndex]
-            newTiles[tileIndex] = tile.copy(likes = tile.likes + 1)
-            state.copy(tiles = newTiles)
+            val tiles = state.tiles.toMutableList()
+            val tile = tiles[tileIndex]
+
+            val id = tile.news.id
+            val newLikes = (likesById[id] ?: tile.likes) + 1
+            likesById[id] = newLikes
+
+            tiles[tileIndex] = tile.copy(likes = newLikes)
+            state.copy(tiles = tiles)
         }
     }
 
@@ -53,22 +58,19 @@ class NewsViewModel : ViewModel() {
                 delay(5_000)
 
                 _uiState.update { state ->
-                    val newTiles = state.tiles.toMutableList()
+                    val tiles = state.tiles.toMutableList()
 
                     val replaceIndex = Random.nextInt(0, 4)
-                    val currentIds = newTiles.map { it.news.id }.toSet()
+                    val currentIds = tiles.map { it.news.id }.toSet()
 
-                    // выбор случайной новости
                     val candidates = allNews.filter { it.id !in currentIds }
-                    val nextNews = if (candidates.isNotEmpty()) {
-                        candidates.random()
-                    } else {
-                        allNews.random()
-                    }
+                    val nextNews = if (candidates.isNotEmpty()) candidates.random() else allNews.random()
 
-                    newTiles[replaceIndex] = NewsTileState(news = nextNews, likes = 0)
+                    // подтяжка лайков
+                    val savedLikes = likesById[nextNews.id] ?: 0
+                    tiles[replaceIndex] = NewsTileState(news = nextNews, likes = savedLikes)
 
-                    state.copy(tiles = newTiles)
+                    state.copy(tiles = tiles)
                 }
             }
         }
@@ -76,6 +78,11 @@ class NewsViewModel : ViewModel() {
 
     private fun initialTiles(): List<NewsTileState> {
         val first = allNews.shuffled().take(4)
-        return first.map { NewsTileState(news = it, likes = 0) }
+        return first.map { news ->
+            NewsTileState(
+                news = news,
+                likes = likesById[news.id] ?: 0
+            )
+        }
     }
 }
