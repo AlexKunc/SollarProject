@@ -15,6 +15,11 @@ class NeptuneWaterRenderer : GLSurfaceView.Renderer {
 
     private var startNs: Long = 0L
 
+    // splash state
+    private var splashX = -10f
+    private var splashY = -10f
+    private var splashStartTime = -10f
+
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GLES20.glClearColor(0f, 0f, 0f, 1f)
         GLES20.glDisable(GLES20.GL_DEPTH_TEST)
@@ -28,7 +33,6 @@ class NeptuneWaterRenderer : GLSurfaceView.Renderer {
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         GLES20.glViewport(0, 0, width, height)
-        // Quad рисуем в NDC => mvp = identity
         Matrix.setIdentityM(mvp, 0)
     }
 
@@ -38,9 +42,21 @@ class NeptuneWaterRenderer : GLSurfaceView.Renderer {
         val t = (System.nanoTime() - startNs) / 1_000_000_000f
 
         program.use()
-        program.setUniforms(mvpMatrix = mvp, timeSec = t)
+        program.setUniforms(
+            mvpMatrix = mvp,
+            timeSec = t,
+            splashX = splashX,
+            splashY = splashY,
+            splashStartTime = splashStartTime
+        )
 
         quad.bindData(program)
         quad.draw()
+    }
+
+    fun onSplash(x: Float, y: Float) {
+        splashX = x
+        splashY = y
+        splashStartTime = (System.nanoTime() - startNs) / 1_000_000_000f
     }
 }
