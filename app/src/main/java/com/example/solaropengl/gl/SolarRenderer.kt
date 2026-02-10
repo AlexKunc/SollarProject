@@ -148,7 +148,7 @@ class SolarRenderer : GLSurfaceView.Renderer, ContextAwareRenderer {
         // солнце (медленно)
         sunSpin = (sunSpin + 8f * dt) % 360f
 
-        // линза
+        // линза -----------------------------------
         bhTime += dt
         bhAngle = (bhAngle + 28f * dt) % 360f
         val speedNow = bhSpeed * (0.9f + 0.1f * sin(bhTime * 0.8f))

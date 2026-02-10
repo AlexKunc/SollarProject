@@ -45,7 +45,6 @@ class WaterShaderProgram {
 
                 vec2 uv = v_UV;
 
-                // ----- ТВОЯ АНИМАЦИЯ (НЕ ТРОГАЕМ) -----
                 float w1 = wave(uv, 1.0, 0.2, 18.0, 1.2);
                 float w2 = wave(uv, 0.2, 1.0, 12.0, 0.9);
                 float w3 = wave(uv, -0.8, 0.6, 9.0, 0.7);

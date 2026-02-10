@@ -7,7 +7,7 @@ import java.nio.FloatBuffer
 
 class WaterQuad {
 
-    // X, Y, Z, U, V (на весь экран)
+    // X, Y, Z, U, V
     private val data = floatArrayOf(
         -1f, -1f, 0f,   0f, 1f,
         1f, -1f, 0f,   1f, 1f,
