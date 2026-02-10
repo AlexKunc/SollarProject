@@ -56,6 +56,44 @@ fun InfoScreen(
         ) {
             if (bodyIndex == 8) {
                 OpenGLScreen(renderer = MoonPhongRenderer())
+            } else if (bodyIndex == 7) {
+                val planet = PlanetRepository.byId(bodyIndex)
+
+                if (planet == null) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Нет данных для выбранного объекта")
+                    }
+                } else {
+                    Column(modifier = Modifier.fillMaxSize()) {
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) {
+                            OpenGLScreen(
+                                renderer = com.example.solaropengl.gl.water.NeptuneWaterRenderer()
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState())
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = planet.description,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
             } else {
                 val planet = PlanetRepository.byId(bodyIndex)
 
